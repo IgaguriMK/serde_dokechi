@@ -1,0 +1,17 @@
+[package]
+name = "serde_dokechi"
+version = "0.1.0"
+edition = "2018"
+
+authors = ["Igaguri <igagurimk@gmail.com>"]
+description = "serde_dokechi is a serializer / deserializer library focus on only serialized binary size."
+categories = ["encoding"]
+keywords = ["serde", "serialization"]
+readme = "README.md"
+repository = "https://github.com/IgaguriMK/serde_dokechi"
+documentation = "https://docs.rs/serde_dokechi"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+serde = "1.0.104"
