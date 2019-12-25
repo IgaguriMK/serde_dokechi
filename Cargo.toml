@@ -7,6 +7,7 @@ authors = ["Igaguri <igagurimk@gmail.com>"]
 description = "serde_dokechi is a serializer / deserializer library focus on only serialized binary size."
 categories = ["encoding"]
 keywords = ["serde", "serialization"]
+license = "MIT OR Apache-2.0"
 readme = "README.md"
 repository = "https://github.com/IgaguriMK/serde_dokechi"
 documentation = "https://docs.rs/serde_dokechi"
