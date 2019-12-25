@@ -1,5 +1,3 @@
-#![allow(unused)]
-
 use std::fmt::Display;
 use std::io::{self, ErrorKind, Read};
 
@@ -72,7 +70,7 @@ impl<R: Read> Deserializer<R> {
 impl<'de, R: Read> de::Deserializer<'de> for &mut Deserializer<R> {
     type Error = Error;
 
-    fn deserialize_any<V>(self, visitor: V) -> Result<V::Value, Self::Error>
+    fn deserialize_any<V>(self, _visitor: V) -> Result<V::Value, Self::Error>
     where
         V: Visitor<'de>,
     {
@@ -232,7 +230,7 @@ impl<'de, R: Read> de::Deserializer<'de> for &mut Deserializer<R> {
 
         match String::from_utf8(bs) {
             Ok(s) => visitor.visit_string(s),
-            Err(e) => Err(Error::custom("invalid UTF-8 sequence")),
+            Err(_) => Err(Error::custom("invalid UTF-8 sequence")),
         }
     }
 
@@ -281,7 +279,7 @@ impl<'de, R: Read> de::Deserializer<'de> for &mut Deserializer<R> {
 
     fn deserialize_unit_struct<V>(
         self,
-        name: &'static str,
+        _name: &'static str,
         visitor: V,
     ) -> Result<V::Value, Self::Error>
     where
@@ -292,7 +290,7 @@ impl<'de, R: Read> de::Deserializer<'de> for &mut Deserializer<R> {
 
     fn deserialize_newtype_struct<V>(
         self,
-        name: &'static str,
+        _name: &'static str,
         visitor: V,
     ) -> Result<V::Value, Self::Error>
     where
@@ -348,7 +346,7 @@ impl<'de, R: Read> de::Deserializer<'de> for &mut Deserializer<R> {
 
     fn deserialize_tuple_struct<V>(
         self,
-        name: &'static str,
+        _name: &'static str,
         len: usize,
         visitor: V,
     ) -> Result<V::Value, Self::Error>
@@ -419,8 +417,8 @@ impl<'de, R: Read> de::Deserializer<'de> for &mut Deserializer<R> {
 
     fn deserialize_enum<V>(
         self,
-        name: &'static str,
-        variants: &'static [&'static str],
+        _name: &'static str,
+        _variants: &'static [&'static str],
         visitor: V,
     ) -> Result<V::Value, Self::Error>
     where
@@ -443,14 +441,14 @@ impl<'de, R: Read> de::Deserializer<'de> for &mut Deserializer<R> {
         visitor.visit_enum(self)
     }
 
-    fn deserialize_identifier<V>(self, visitor: V) -> Result<V::Value, Self::Error>
+    fn deserialize_identifier<V>(self, _visitor: V) -> Result<V::Value, Self::Error>
     where
         V: Visitor<'de>,
     {
         Err(Error::Unsupported("deserialize_identifier"))
     }
 
-    fn deserialize_ignored_any<V>(self, visitor: V) -> Result<V::Value, Self::Error>
+    fn deserialize_ignored_any<V>(self, _visitor: V) -> Result<V::Value, Self::Error>
     where
         V: Visitor<'de>,
     {
@@ -687,7 +685,7 @@ mod test_primitives {
     #[test]
     fn deserialize_long_str() {
         let mut to_be = String::new();
-        for i in 0..0x100000 {
+        for _ in 0..0x100000 {
             to_be.push_str("sample text");
         }
 
@@ -781,11 +779,11 @@ mod test_primitives {
     fn deserialize_hashmap() {
         let mut bs = vec![3u8];
         bs.push(1);
-        encode_u64(&mut bs, 1024);
+        encode_u64(&mut bs, 1024).unwrap();
         bs.push(2);
-        encode_u64(&mut bs, 1025);
+        encode_u64(&mut bs, 1025).unwrap();
         bs.push(3);
-        encode_u64(&mut bs, 1026);
+        encode_u64(&mut bs, 1026).unwrap();
 
         let v: HashMap<u8, u16> = from_read(&bs[..]).unwrap();
 
