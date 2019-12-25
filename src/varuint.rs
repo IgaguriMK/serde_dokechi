@@ -53,11 +53,10 @@ pub fn encode_u64(mut w: impl Write, v: u64) -> io::Result<()> {
             w.write_all(&[0b1111_1110])?;
             w.write_all(&bs[1..8])?;
         }
-        x if x <= 64 => {
+        _ => {
             w.write_all(&[0b1111_1111])?;
             w.write_all(&bs[0..8])?;
         }
-        x => unreachable!("no encoding for {} bits", x),
     }
     Ok(())
 }
@@ -110,6 +109,101 @@ pub fn decode_u64(mut r: impl Read) -> io::Result<u64> {
     }
 
     Ok(u64::from_be_bytes(bs))
+}
+
+pub fn encode_u128(mut w: impl Write, v: u128) -> io::Result<()> {
+    let bs = v.to_be_bytes();
+
+    match 128 - v.leading_zeros() {
+        x if x <= 7 => {
+            w.write_all(&[bs[15]])?;
+        }
+        x if x <= 14 => {
+            w.write_all(&[0b1000_0000 | bs[14]])?;
+            w.write_all(&bs[15..16])?;
+        }
+        x if x <= 21 => {
+            w.write_all(&[0b1100_0000 | bs[13]])?;
+            w.write_all(&bs[14..16])?;
+        }
+        x if x <= 28 => {
+            w.write_all(&[0b1110_0000 | bs[12]])?;
+            w.write_all(&bs[13..16])?;
+        }
+        x if x <= 35 => {
+            w.write_all(&[0b1111_0000 | bs[11]])?;
+            w.write_all(&bs[12..16])?;
+        }
+        x if x <= 42 => {
+            w.write_all(&[0b1111_1000 | bs[10]])?;
+            w.write_all(&bs[11..16])?;
+        }
+        x if x <= 49 => {
+            w.write_all(&[0b1111_1100 | bs[9]])?;
+            w.write_all(&bs[10..16])?;
+        }
+        x if x <= 56 => {
+            w.write_all(&[0b1111_1110])?;
+            w.write_all(&bs[9..16])?;
+        }
+        _ => {
+            w.write_all(&[0b1111_1111])?;
+            w.write_all(&bs[0..16])?;
+        }
+    }
+    Ok(())
+}
+
+pub fn decode_u128(mut r: impl Read) -> io::Result<u128> {
+    let mut head = [0u8];
+    let mut bs = [0u8; 8];
+
+    r.read_exact(&mut head)?;
+    let h = head[0];
+    eprintln!("{}", h.reverse_bits().leading_zeros());
+
+    match h {
+        x if x <= 0b0111_1111 => {
+            bs[7] = 0b0111_1111 & h;
+        }
+        x if x <= 0b1011_1111 => {
+            bs[6] = 0b0011_1111 & h;
+            r.read_exact(&mut bs[7..8])?;
+        }
+        x if x <= 0b1101_1111 => {
+            bs[5] = 0b0001_1111 & h;
+            r.read_exact(&mut bs[6..8])?;
+        }
+        x if x <= 0b1110_1111 => {
+            bs[4] = 0b0000_1111 & h;
+            r.read_exact(&mut bs[5..8])?;
+        }
+        x if x <= 0b1111_0111 => {
+            bs[3] = 0b0000_0111 & h;
+            r.read_exact(&mut bs[4..8])?;
+        }
+        x if x <= 0b1111_1011 => {
+            bs[2] = 0b0000_0011 & h;
+            r.read_exact(&mut bs[3..8])?;
+        }
+        x if x <= 0b1111_1101 => {
+            bs[1] = 0b0000_0001 & h;
+            r.read_exact(&mut bs[2..8])?;
+        }
+        x if x <= 0b1111_1110 => {
+            r.read_exact(&mut bs[1..8])?;
+        }
+        0b1111_1111 => {
+            let mut bs = [0u8; 16];
+            r.read_exact(&mut bs)?;
+            return Ok(u128::from_be_bytes(bs));
+        }
+        _ => {
+            return Err(io::Error::from(io::ErrorKind::InvalidData));
+        }
+    }
+
+    Ok(u64::from_be_bytes(bs) as u128)
 }
 
 #[cfg(test)]
@@ -165,32 +259,65 @@ mod test {
 
     #[test]
     fn test_decode_u64() {
-        decode_test_for(0);
-        decode_test_for(1);
-        decode_test_for(127);
-        decode_test_for(128);
-        decode_test_for(16383);
-        decode_test_for(16384);
-        decode_test_for(2097151);
-        decode_test_for(2097152);
-        decode_test_for(268435455);
-        decode_test_for(268435456);
-        decode_test_for(34359738367);
-        decode_test_for(34359738368);
-        decode_test_for(4398046511103);
-        decode_test_for(4398046511104);
-        decode_test_for(562949953421311);
-        decode_test_for(562949953421312);
-        decode_test_for(72057594037927935);
-        decode_test_for(72057594037927936);
-        decode_test_for(18446744073709551615);
+        decode_test_for_u64(0);
+        decode_test_for_u64(1);
+        decode_test_for_u64(127);
+        decode_test_for_u64(128);
+        decode_test_for_u64(16383);
+        decode_test_for_u64(16384);
+        decode_test_for_u64(2097151);
+        decode_test_for_u64(2097152);
+        decode_test_for_u64(268435455);
+        decode_test_for_u64(268435456);
+        decode_test_for_u64(34359738367);
+        decode_test_for_u64(34359738368);
+        decode_test_for_u64(4398046511103);
+        decode_test_for_u64(4398046511104);
+        decode_test_for_u64(562949953421311);
+        decode_test_for_u64(562949953421312);
+        decode_test_for_u64(72057594037927935);
+        decode_test_for_u64(72057594037927936);
+        decode_test_for_u64(18446744073709551615);
     }
 
-    fn decode_test_for(to_be: u64) {
+    fn decode_test_for_u64(to_be: u64) {
         eprintln!("for {}", to_be);
         let mut buf = Vec::new();
         encode_u64(&mut buf, to_be).expect("encode error");
         let actual = decode_u64(buf.as_slice()).expect("decode error");
+        assert_eq!(actual, to_be);
+    }
+
+    #[test]
+    fn test_decode_u128() {
+        decode_test_for_u128(0);
+        decode_test_for_u128(1);
+        decode_test_for_u128(127);
+        decode_test_for_u128(128);
+        decode_test_for_u128(16383);
+        decode_test_for_u128(16384);
+        decode_test_for_u128(2097151);
+        decode_test_for_u128(2097152);
+        decode_test_for_u128(268435455);
+        decode_test_for_u128(268435456);
+        decode_test_for_u128(34359738367);
+        decode_test_for_u128(34359738368);
+        decode_test_for_u128(4398046511103);
+        decode_test_for_u128(4398046511104);
+        decode_test_for_u128(562949953421311);
+        decode_test_for_u128(562949953421312);
+        decode_test_for_u128(72057594037927935);
+        decode_test_for_u128(72057594037927936);
+        decode_test_for_u128(18446744073709551615);
+        decode_test_for_u128((u64::max_value() as u128) + 1);
+        decode_test_for_u128(u128::max_value());
+    }
+
+    fn decode_test_for_u128(to_be: u128) {
+        eprintln!("for {}", to_be);
+        let mut buf = Vec::new();
+        encode_u128(&mut buf, to_be).expect("encode error");
+        let actual = decode_u128(buf.as_slice()).expect("decode error");
         assert_eq!(actual, to_be);
     }
 }

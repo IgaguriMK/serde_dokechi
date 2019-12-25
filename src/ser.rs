@@ -4,7 +4,7 @@ use std::io::{self, Write};
 use serde::ser::{self, Serialize};
 use thiserror::Error;
 
-use crate::varuint::encode_u64;
+use crate::varuint::{encode_u128, encode_u64};
 
 pub fn to_writer<W: Write, T: Serialize>(w: W, value: T) -> Result<(), Error> {
     let mut serializer = Serializer::new(w);
@@ -112,10 +112,7 @@ impl<'a, W: Write> ser::Serializer for &'a mut Serializer<W> {
     }
 
     fn serialize_u128(self, v: u128) -> Result<Self::Ok, Self::Error> {
-        let upper = 0xff_ff_ff_ff_ff_ff_ff_ff & (v >> 64);
-        let lower = 0xff_ff_ff_ff_ff_ff_ff_ff & v;
-        encode_u64(&mut self.w, lower as u64).unwrap();
-        encode_u64(&mut self.w, upper as u64).unwrap();
+        encode_u128(&mut self.w, v)?;
         Ok(())
     }
 

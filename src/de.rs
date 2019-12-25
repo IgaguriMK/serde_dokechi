@@ -5,7 +5,7 @@ use serde::de::Error as _;
 use serde::de::{self, DeserializeOwned, IntoDeserializer, Unexpected, Visitor};
 use thiserror::Error;
 
-use crate::varuint::decode_u64;
+use crate::varuint::{decode_u128, decode_u64};
 
 pub fn from_reader<R: Read, T: DeserializeOwned>(r: R) -> Result<T, Error> {
     let mut deserializer = Deserializer::new(r);
@@ -61,9 +61,7 @@ impl<R: Read> Deserializer<R> {
     }
 
     fn parse_u128(&mut self) -> Result<u128, Error> {
-        let lower = decode_u64(&mut self.r)?;
-        let upper = decode_u64(&mut self.r)?;
-        Ok((upper as u128) << 64 | (lower as u128))
+        Ok(decode_u128(&mut self.r)?)
     }
 }
 
@@ -543,7 +541,7 @@ mod test {
 
     use serde_derive::Deserialize;
 
-    use crate::varuint::encode_u64;
+    use crate::varuint::{encode_u128, encode_u64};
 
     #[test]
     fn deserialize_bool_false() {
@@ -631,12 +629,8 @@ mod test {
         let to_be = -123i128;
 
         let u = ((-(to_be + 1)) as u128) << 1 | 1;
-        let upper = 0xff_ff_ff_ff_ff_ff_ff_ff & (u >> 64);
-        let lower = 0xff_ff_ff_ff_ff_ff_ff_ff & u;
-
         let mut bs = Vec::new();
-        encode_u64(&mut bs, lower as u64).unwrap();
-        encode_u64(&mut bs, upper as u64).unwrap();
+        encode_u128(&mut bs, u).unwrap();
 
         let v: i128 = from_reader(bs.as_slice()).unwrap();
         assert_eq!(v, to_be);
@@ -684,12 +678,8 @@ mod test {
     fn deserialize_u128() {
         let to_be = 0x123456789abcdef0123456789abcdefu128;
 
-        let upper = 0xff_ff_ff_ff_ff_ff_ff_ff & (to_be >> 64);
-        let lower = 0xff_ff_ff_ff_ff_ff_ff_ff & to_be;
-
         let mut bs = Vec::new();
-        encode_u64(&mut bs, lower as u64).unwrap();
-        encode_u64(&mut bs, upper as u64).unwrap();
+        encode_u128(&mut bs, to_be).unwrap();
 
         let v: u128 = from_reader(&bs[..]).unwrap();
         assert_eq!(v, to_be);
