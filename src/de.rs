@@ -107,36 +107,60 @@ impl<'de, R: Read> de::Deserializer<'de> for &mut Deserializer<R> {
     where
         V: Visitor<'de>,
     {
-        let mut bs = [0u8; 2];
-        self.r.read_exact(&mut bs[..])?;
-        visitor.visit_i16(i16::from_le_bytes(bs))
+        let u = self.parse_u16()?;
+
+        let v = if u & 1 == 0 {
+            ((u >> 1) as i16)
+        } else {
+            -((u >> 1) as i16) - 1
+        };
+
+        visitor.visit_i16(v)
     }
 
     fn deserialize_i32<V>(self, visitor: V) -> Result<V::Value, Self::Error>
     where
         V: Visitor<'de>,
     {
-        let mut bs = [0u8; 4];
-        self.r.read_exact(&mut bs[..])?;
-        visitor.visit_i32(i32::from_le_bytes(bs))
+        let u = self.parse_u32()?;
+
+        let v = if u & 1 == 0 {
+            ((u >> 1) as i32)
+        } else {
+            -((u >> 1) as i32) - 1
+        };
+
+        visitor.visit_i32(v)
     }
 
     fn deserialize_i64<V>(self, visitor: V) -> Result<V::Value, Self::Error>
     where
         V: Visitor<'de>,
     {
-        let mut bs = [0u8; 8];
-        self.r.read_exact(&mut bs[..])?;
-        visitor.visit_i64(i64::from_le_bytes(bs))
+        let u = decode_u64(&mut self.r)?;
+
+        let v = if u & 1 == 0 {
+            ((u >> 1) as i64)
+        } else {
+            -((u >> 1) as i64) - 1
+        };
+
+        visitor.visit_i64(v)
     }
 
     fn deserialize_i128<V>(self, visitor: V) -> Result<V::Value, Self::Error>
     where
         V: Visitor<'de>,
     {
-        let mut bs = [0u8; 16];
-        self.r.read_exact(&mut bs[..])?;
-        visitor.visit_i128(i128::from_le_bytes(bs))
+        let u = self.parse_u128()?;
+
+        let v = if u & 1 == 0 {
+            ((u >> 1) as i128)
+        } else {
+            -((u >> 1) as i128) - 1
+        };
+
+        visitor.visit_i128(v)
     }
 
     fn deserialize_u8<V>(self, visitor: V) -> Result<V::Value, Self::Error>
@@ -551,33 +575,70 @@ mod test {
 
     #[test]
     fn deserialize_i16() {
-        let to_be = -1i16;
-        let bs = to_be.to_le_bytes();
-        let v: i16 = from_reader(&bs[..]).unwrap();
+        let to_be = -123i16;
+
+        let u = ((-(to_be + 1)) as u16) << 1 | 1;
+        let mut bs = Vec::new();
+        encode_u64(&mut bs, u as u64).unwrap();
+
+        let v: i16 = from_reader(bs.as_slice()).unwrap();
         assert_eq!(v, to_be);
     }
 
     #[test]
+    fn deserialize_i16_all() {
+        for to_be in i16::min_value()..=i16::max_value() {
+            let u = if to_be >= 0 {
+                (to_be as u16) << 1
+            } else {
+                ((-(to_be + 1)) as u16) << 1 | 1
+            };
+
+            let mut bs = Vec::new();
+            encode_u64(&mut bs, u as u64).unwrap();
+
+            let v: i16 = from_reader(bs.as_slice()).unwrap();
+            assert_eq!(v, to_be);
+        }
+    }
+
+    #[test]
     fn deserialize_i32() {
-        let to_be = -1i32;
-        let bs = to_be.to_le_bytes();
-        let v: i32 = from_reader(&bs[..]).unwrap();
+        let to_be = -123i32;
+
+        let u = ((-(to_be + 1)) as u32) << 1 | 1;
+        let mut bs = Vec::new();
+        encode_u64(&mut bs, u as u64).unwrap();
+
+        let v: i32 = from_reader(bs.as_slice()).unwrap();
         assert_eq!(v, to_be);
     }
 
     #[test]
     fn deserialize_i64() {
-        let to_be = -1i64;
-        let bs = to_be.to_le_bytes();
-        let v: i64 = from_reader(&bs[..]).unwrap();
+        let to_be = -123i64;
+
+        let u = ((-(to_be + 1)) as u64) << 1 | 1;
+        let mut bs = Vec::new();
+        encode_u64(&mut bs, u).unwrap();
+
+        let v: i64 = from_reader(bs.as_slice()).unwrap();
         assert_eq!(v, to_be);
     }
 
     #[test]
     fn deserialize_i128() {
-        let to_be = -1i128;
-        let bs = to_be.to_le_bytes();
-        let v: i128 = from_reader(&bs[..]).unwrap();
+        let to_be = -123i128;
+
+        let u = ((-(to_be + 1)) as u128) << 1 | 1;
+        let upper = 0xff_ff_ff_ff_ff_ff_ff_ff & (u >> 64);
+        let lower = 0xff_ff_ff_ff_ff_ff_ff_ff & u;
+
+        let mut bs = Vec::new();
+        encode_u64(&mut bs, lower as u64).unwrap();
+        encode_u64(&mut bs, upper as u64).unwrap();
+
+        let v: i128 = from_reader(bs.as_slice()).unwrap();
         assert_eq!(v, to_be);
     }
 

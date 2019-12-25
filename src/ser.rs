@@ -55,27 +55,39 @@ impl<'a, W: Write> ser::Serializer for &'a mut Serializer<W> {
     }
 
     fn serialize_i16(self, v: i16) -> Result<Self::Ok, Self::Error> {
-        let bs = v.to_le_bytes();
-        self.w.write_all(&bs[..])?;
-        Ok(())
+        let u = if v >= 0 {
+            (v as u16) << 1
+        } else {
+            ((-(v + 1)) as u16) << 1 | 1
+        };
+        u.serialize(self)
     }
 
     fn serialize_i32(self, v: i32) -> Result<Self::Ok, Self::Error> {
-        let bs = v.to_le_bytes();
-        self.w.write_all(&bs[..])?;
-        Ok(())
+        let u = if v >= 0 {
+            (v as u32) << 1
+        } else {
+            ((-(v + 1)) as u32) << 1 | 1
+        };
+        u.serialize(self)
     }
 
     fn serialize_i64(self, v: i64) -> Result<Self::Ok, Self::Error> {
-        let bs = v.to_le_bytes();
-        self.w.write_all(&bs[..])?;
-        Ok(())
+        let u = if v >= 0 {
+            (v as u64) << 1
+        } else {
+            ((-(v + 1)) as u64) << 1 | 1
+        };
+        u.serialize(self)
     }
 
     fn serialize_i128(self, v: i128) -> Result<Self::Ok, Self::Error> {
-        let bs = v.to_le_bytes();
-        self.w.write_all(&bs[..])?;
-        Ok(())
+        let u = if v >= 0 {
+            (v as u128) << 1
+        } else {
+            ((-(v + 1)) as u128) << 1 | 1
+        };
+        u.serialize(self)
     }
 
     fn serialize_u8(self, v: u8) -> Result<Self::Ok, Self::Error> {
