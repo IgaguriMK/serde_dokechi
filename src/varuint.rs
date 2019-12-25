@@ -18,7 +18,6 @@ use std::io::{self, Read, Write};
     11111111 XXXXXXXX : 64bit (72057594037927936 ~ 18446744073709551615)
 */
 
-#[allow(unused)]
 pub fn encode_u64(mut w: impl Write, v: u64) -> io::Result<()> {
     let bs = v.to_be_bytes();
 

@@ -7,7 +7,7 @@ use thiserror::Error;
 
 use crate::varuint::decode_u64;
 
-pub fn from_read<R: Read, T: DeserializeOwned>(r: R) -> Result<T, Error> {
+pub fn from_reader<R: Read, T: DeserializeOwned>(r: R) -> Result<T, Error> {
     let mut deserializer = Deserializer::new(r);
     let value: T = de::Deserialize::deserialize(&mut deserializer)?;
     deserializer.end()?;
@@ -512,7 +512,7 @@ impl de::Error for Error {
 }
 
 #[cfg(test)]
-mod test_primitives {
+mod test {
     use super::*;
 
     use std::collections::{HashMap, HashSet};
@@ -524,28 +524,28 @@ mod test_primitives {
     #[test]
     fn deserialize_bool_false() {
         let bs = [0u8];
-        let v: bool = from_read(&bs[..]).unwrap();
+        let v: bool = from_reader(&bs[..]).unwrap();
         assert!(!v);
     }
 
     #[test]
     fn deserialize_bool_true() {
         let bs = [1u8];
-        let v: bool = from_read(&bs[..]).unwrap();
+        let v: bool = from_reader(&bs[..]).unwrap();
         assert!(v);
     }
 
     #[test]
     fn deserialize_bool_fails_with_2() {
         let bs = [2u8];
-        let _ = from_read::<&[u8], bool>(&bs[..]).unwrap_err();
+        let _ = from_reader::<&[u8], bool>(&bs[..]).unwrap_err();
     }
 
     #[test]
     fn deserialize_i8() {
         let to_be = -1i8;
         let bs = to_be.to_le_bytes();
-        let v: i8 = from_read(&bs[..]).unwrap();
+        let v: i8 = from_reader(&bs[..]).unwrap();
         assert_eq!(v, to_be);
     }
 
@@ -553,7 +553,7 @@ mod test_primitives {
     fn deserialize_i16() {
         let to_be = -1i16;
         let bs = to_be.to_le_bytes();
-        let v: i16 = from_read(&bs[..]).unwrap();
+        let v: i16 = from_reader(&bs[..]).unwrap();
         assert_eq!(v, to_be);
     }
 
@@ -561,7 +561,7 @@ mod test_primitives {
     fn deserialize_i32() {
         let to_be = -1i32;
         let bs = to_be.to_le_bytes();
-        let v: i32 = from_read(&bs[..]).unwrap();
+        let v: i32 = from_reader(&bs[..]).unwrap();
         assert_eq!(v, to_be);
     }
 
@@ -569,7 +569,7 @@ mod test_primitives {
     fn deserialize_i64() {
         let to_be = -1i64;
         let bs = to_be.to_le_bytes();
-        let v: i64 = from_read(&bs[..]).unwrap();
+        let v: i64 = from_reader(&bs[..]).unwrap();
         assert_eq!(v, to_be);
     }
 
@@ -577,7 +577,7 @@ mod test_primitives {
     fn deserialize_i128() {
         let to_be = -1i128;
         let bs = to_be.to_le_bytes();
-        let v: i128 = from_read(&bs[..]).unwrap();
+        let v: i128 = from_reader(&bs[..]).unwrap();
         assert_eq!(v, to_be);
     }
 
@@ -585,7 +585,7 @@ mod test_primitives {
     fn deserialize_u8() {
         let to_be = 0x12u8;
         let bs = to_be.to_le_bytes();
-        let v: u8 = from_read(&bs[..]).unwrap();
+        let v: u8 = from_reader(&bs[..]).unwrap();
         assert_eq!(v, to_be);
     }
 
@@ -595,7 +595,7 @@ mod test_primitives {
         let mut bs = Vec::new();
         encode_u64(&mut bs, to_be as u64).unwrap();
 
-        let v: u16 = from_read(&bs[..]).unwrap();
+        let v: u16 = from_reader(&bs[..]).unwrap();
         assert_eq!(v, to_be);
     }
 
@@ -605,7 +605,7 @@ mod test_primitives {
         let mut bs = Vec::new();
         encode_u64(&mut bs, to_be as u64).unwrap();
 
-        let v: u32 = from_read(&bs[..]).unwrap();
+        let v: u32 = from_reader(&bs[..]).unwrap();
         assert_eq!(v, to_be);
     }
 
@@ -615,7 +615,7 @@ mod test_primitives {
         let mut bs = Vec::new();
         encode_u64(&mut bs, to_be as u64).unwrap();
 
-        let v: u64 = from_read(&bs[..]).unwrap();
+        let v: u64 = from_reader(&bs[..]).unwrap();
         assert_eq!(v, to_be);
     }
 
@@ -630,7 +630,7 @@ mod test_primitives {
         encode_u64(&mut bs, lower as u64).unwrap();
         encode_u64(&mut bs, upper as u64).unwrap();
 
-        let v: u128 = from_read(&bs[..]).unwrap();
+        let v: u128 = from_reader(&bs[..]).unwrap();
         assert_eq!(v, to_be);
     }
 
@@ -638,7 +638,7 @@ mod test_primitives {
     fn deserialize_f32() {
         let to_be = 123.45678f32;
         let bs = to_be.to_le_bytes();
-        let v: f32 = from_read(&bs[..]).unwrap();
+        let v: f32 = from_reader(&bs[..]).unwrap();
         assert_eq!(v, to_be);
     }
 
@@ -646,28 +646,28 @@ mod test_primitives {
     fn deserialize_f64() {
         let to_be = 123.45678f64;
         let bs = to_be.to_le_bytes();
-        let v: f64 = from_read(&bs[..]).unwrap();
+        let v: f64 = from_reader(&bs[..]).unwrap();
         assert_eq!(v, to_be);
     }
 
     #[test]
     fn deserialize_char_a() {
         let bs = [0x41, 0x00, 0x00]; // A
-        let v: char = from_read(&bs[..]).unwrap();
+        let v: char = from_reader(&bs[..]).unwrap();
         assert_eq!(v, 'A');
     }
 
     #[test]
     fn deserialize_char_2byte() {
         let bs = [0x9e, 0x8a, 0x00]; // 語
-        let v: char = from_read(&bs[..]).unwrap();
+        let v: char = from_reader(&bs[..]).unwrap();
         assert_eq!(v, '語');
     }
 
     #[test]
     fn deserialize_char_3byte() {
         let bs = [0x3c, 0x12, 0x02]; // 𡈼
-        let v: char = from_read(&bs[..]).unwrap();
+        let v: char = from_reader(&bs[..]).unwrap();
         assert_eq!(v, '𡈼');
     }
 
@@ -678,7 +678,7 @@ mod test_primitives {
         encode_u64(&mut bs, to_be.len() as u64).unwrap();
         bs.extend(to_be.as_bytes().iter());
 
-        let v: String = from_read(bs.as_slice()).unwrap();
+        let v: String = from_reader(bs.as_slice()).unwrap();
         assert_eq!(&v, to_be);
     }
 
@@ -693,28 +693,28 @@ mod test_primitives {
         encode_u64(&mut bs, to_be.len() as u64).unwrap();
         bs.extend(to_be.as_bytes().iter());
 
-        let v: String = from_read(bs.as_slice()).unwrap();
+        let v: String = from_reader(bs.as_slice()).unwrap();
         assert_eq!(v, to_be);
     }
 
     #[test]
     fn deserialize_option_none_u8() {
         let bs = [0u8];
-        let v: Option<u8> = from_read(&bs[..]).unwrap();
+        let v: Option<u8> = from_reader(&bs[..]).unwrap();
         assert_eq!(v, None);
     }
 
     #[test]
     fn deserialize_option_some_u8() {
         let bs = [1u8, 123];
-        let v: Option<u8> = from_read(&bs[..]).unwrap();
+        let v: Option<u8> = from_reader(&bs[..]).unwrap();
         assert_eq!(v, Some(123));
     }
 
     #[test]
     fn deserialize_unit() {
         let bs: [u8; 0] = [];
-        let v: () = from_read(&bs[..]).unwrap();
+        let v: () = from_reader(&bs[..]).unwrap();
         assert_eq!(v, ());
     }
 
@@ -724,7 +724,7 @@ mod test_primitives {
     #[test]
     fn deserialize_unit_struct() {
         let bs: [u8; 0] = [];
-        let v: UnitStruct = from_read(&bs[..]).unwrap();
+        let v: UnitStruct = from_reader(&bs[..]).unwrap();
         assert_eq!(v, UnitStruct);
     }
 
@@ -734,21 +734,21 @@ mod test_primitives {
     #[test]
     fn deserialize_newtype_struct() {
         let bs = [123u8];
-        let v: NewtypeStruct = from_read(&bs[..]).unwrap();
+        let v: NewtypeStruct = from_reader(&bs[..]).unwrap();
         assert_eq!(v, NewtypeStruct(123));
     }
 
     #[test]
     fn deserialize_vec() {
         let bs = [3u8, 1, 2, 3];
-        let v: Vec<u8> = from_read(&bs[..]).unwrap();
+        let v: Vec<u8> = from_reader(&bs[..]).unwrap();
         assert_eq!(v, vec![1, 2, 3]);
     }
 
     #[test]
     fn deserialize_hashset() {
         let bs = [3u8, 1, 2, 3];
-        let v: HashSet<u8> = from_read(&bs[..]).unwrap();
+        let v: HashSet<u8> = from_reader(&bs[..]).unwrap();
 
         let mut to_be = HashSet::<u8>::new();
         to_be.insert(1);
@@ -761,7 +761,7 @@ mod test_primitives {
     #[test]
     fn deserialize_tuple() {
         let bs = [1u8, 2, 3];
-        let v: (u8, u16, u8) = from_read(&bs[..]).unwrap();
+        let v: (u8, u16, u8) = from_reader(&bs[..]).unwrap();
         assert_eq!(v, (1u8, 2u16, 3u8));
     }
 
@@ -771,7 +771,7 @@ mod test_primitives {
     #[test]
     fn deserialize_tuple_struct() {
         let bs = [1u8, 2, 3];
-        let v: TupleStruct = from_read(&bs[..]).unwrap();
+        let v: TupleStruct = from_reader(&bs[..]).unwrap();
         assert_eq!(v, TupleStruct(1u8, 2u16, 3u8));
     }
 
@@ -785,7 +785,7 @@ mod test_primitives {
         bs.push(3);
         encode_u64(&mut bs, 1026).unwrap();
 
-        let v: HashMap<u8, u16> = from_read(&bs[..]).unwrap();
+        let v: HashMap<u8, u16> = from_reader(&bs[..]).unwrap();
 
         let mut to_be = HashMap::<u8, u16>::new();
         to_be.insert(1, 1024);
@@ -813,7 +813,7 @@ mod test_primitives {
         bs.extend(actual_name.as_bytes());
         bs.extend(&97.3f32.to_le_bytes()[..]);
 
-        let v: BasicStruct = from_read(&bs[..]).unwrap();
+        let v: BasicStruct = from_reader(&bs[..]).unwrap();
         assert_eq!(v.id, 123);
         assert_eq!(&v.name, actual_name);
         assert_eq!(v.score, 97.3f32);
@@ -831,21 +831,21 @@ mod test_primitives {
     #[test]
     fn deserialize_enum_unit_variant_a() {
         let bs = [0u8];
-        let v: BasicEnum = from_read(&bs[..]).unwrap();
+        let v: BasicEnum = from_reader(&bs[..]).unwrap();
         assert_eq!(v, BasicEnum::UnitA);
     }
 
     #[test]
     fn deserialize_enum_unit_variant_b() {
         let bs = [1u8];
-        let v: BasicEnum = from_read(&bs[..]).unwrap();
+        let v: BasicEnum = from_reader(&bs[..]).unwrap();
         assert_eq!(v, BasicEnum::UnitB);
     }
 
     #[test]
     fn deserialize_enum_newtype_variant() {
         let bs = [2u8, 4, b'b', b'i', b'i', b'm'];
-        let v: BasicEnum = from_read(&bs[..]).unwrap();
+        let v: BasicEnum = from_reader(&bs[..]).unwrap();
         assert_eq!(v, BasicEnum::Newtype("biim".to_owned()));
     }
 
@@ -856,7 +856,7 @@ mod test_primitives {
         encode_u64(&mut bs, 3).unwrap();
         bs.extend(b"Abe");
 
-        let v: BasicEnum = from_read(&bs[..]).unwrap();
+        let v: BasicEnum = from_reader(&bs[..]).unwrap();
         assert_eq!(v, BasicEnum::Tuple(0x1234, "Abe".to_owned()));
     }
 }
