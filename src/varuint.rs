@@ -67,7 +67,6 @@ pub fn decode_u64(mut r: impl Read) -> io::Result<u64> {
 
     r.read_exact(&mut head)?;
     let h = head[0];
-    eprintln!("{}", h.reverse_bits().leading_zeros());
 
     match h {
         x if x <= 0b0111_1111 => {
@@ -160,7 +159,6 @@ pub fn decode_u128(mut r: impl Read) -> io::Result<u128> {
 
     r.read_exact(&mut head)?;
     let h = head[0];
-    eprintln!("{}", h.reverse_bits().leading_zeros());
 
     match h {
         x if x <= 0b0111_1111 => {
