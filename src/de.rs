@@ -108,7 +108,7 @@ impl<'de, R: Read> de::Deserializer<'de> for &mut Deserializer<R> {
         let u = self.parse_u16()?;
 
         let v = if u & 1 == 0 {
-            ((u >> 1) as i16)
+            (u >> 1) as i16
         } else {
             -((u >> 1) as i16) - 1
         };
@@ -123,7 +123,7 @@ impl<'de, R: Read> de::Deserializer<'de> for &mut Deserializer<R> {
         let u = self.parse_u32()?;
 
         let v = if u & 1 == 0 {
-            ((u >> 1) as i32)
+            (u >> 1) as i32
         } else {
             -((u >> 1) as i32) - 1
         };
@@ -138,7 +138,7 @@ impl<'de, R: Read> de::Deserializer<'de> for &mut Deserializer<R> {
         let u = decode_u64(&mut self.r)?;
 
         let v = if u & 1 == 0 {
-            ((u >> 1) as i64)
+            (u >> 1) as i64
         } else {
             -((u >> 1) as i64) - 1
         };
@@ -153,7 +153,7 @@ impl<'de, R: Read> de::Deserializer<'de> for &mut Deserializer<R> {
         let u = self.parse_u128()?;
 
         let v = if u & 1 == 0 {
-            ((u >> 1) as i128)
+            (u >> 1) as i128
         } else {
             -((u >> 1) as i128) - 1
         };
