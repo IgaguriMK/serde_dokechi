@@ -10,6 +10,8 @@ serde_dokechi
 
 `serde_dokechi` is a serializer / deserializer library focus on only serialized binary size.
 
+Minimum supprted Rust version is `1.40.0 (2019-12-19)`.
+
 ## License
 
 `serde_dokechi` is distributed under the terms of both the MIT license and the Apache License (Version 2.0).
