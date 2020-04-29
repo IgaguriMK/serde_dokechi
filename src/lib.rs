@@ -2,6 +2,7 @@
 //!
 //! Minimum supprted Rust version is `1.40.0 (2019-12-19)`.
 
+#![warn(missing_docs)]
 pub mod de;
 pub mod ser;
 

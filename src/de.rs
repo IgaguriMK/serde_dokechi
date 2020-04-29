@@ -1,5 +1,7 @@
+//! Deserialize Dokechi format to Rust data structure.
+
 use std::fmt::Display;
-use std::io::{self, ErrorKind, Read};
+use std::io::{self, Read};
 
 use serde::de::Error as _;
 use serde::de::{self, DeserializeOwned, IntoDeserializer, Unexpected, Visitor};
@@ -7,13 +9,14 @@ use thiserror::Error;
 
 use crate::varuint::{decode_u128, decode_u64};
 
+/// Deserialize an instance of type `T` from IO stream of Dokechi format.
 pub fn from_reader<R: Read, T: DeserializeOwned>(r: R) -> Result<T, Error> {
     let mut deserializer = Deserializer::new(r);
     let value: T = de::Deserialize::deserialize(&mut deserializer)?;
-    deserializer.end()?;
     Ok(value)
 }
 
+/// A structure that deserializes Dokechi format into Rust values.
 #[derive(Debug)]
 pub struct Deserializer<R: Read> {
     r: R,
@@ -23,23 +26,6 @@ impl<R: Read> Deserializer<R> {
     /// Create new `Deserializer`
     pub fn new(r: R) -> Deserializer<R> {
         Deserializer { r }
-    }
-
-    /// This method should be called after a value has been deserialized to ensure there is no
-    /// trailing data in the input source.
-    pub fn end(&mut self) -> Result<(), Error> {
-        let mut bs = [0u8];
-
-        match self.r.read_exact(&mut bs[..]) {
-            Ok(_) => Err(Error::IncompleteRead),
-            Err(e) => {
-                if e.kind() == ErrorKind::UnexpectedEof {
-                    Ok(())
-                } else {
-                    Err(Error::IO(e))
-                }
-            }
-        }
     }
 
     fn parse_u16(&mut self) -> Result<u16, Error> {
@@ -515,21 +501,24 @@ impl<'de, 'a, R: Read> de::VariantAccess<'de> for &'a mut Deserializer<R> {
     }
 }
 
+/// The [Deserializer](struct.Deserializer.html)'s error type.
 #[derive(Debug, Error)]
+#[non_exhaustive]
 pub enum Error {
-    #[error("decode finished but input bytes left")]
-    IncompleteRead,
+    /// The underlying reader returnd IO error.
     #[error("{0}")]
     IO(#[from] io::Error),
+    /// Unsupported deseriazising operation called.
     #[error("{0} is unsupported")]
     Unsupported(&'static str),
+    /// An error from serde framework.
     #[error("{0}")]
-    Other(String),
+    Serde(String),
 }
 
 impl de::Error for Error {
     fn custom<T: Display>(msg: T) -> Error {
-        Error::Other(msg.to_string())
+        Error::Serde(msg.to_string())
     }
 }
 

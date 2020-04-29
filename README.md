@@ -4,13 +4,11 @@ serde_dokechi
 [![serde_dokechi at crates.io](https://img.shields.io/crates/v/serde_dokechi.svg)](https://crates.io/crates/serde_dokechi)
 [![serde_dokechi at docs.rs](https://docs.rs/serde_dokechi/badge.svg)](https://docs.rs/serde_dokechi)
 [![Build Status (master)](https://travis-ci.org/IgaguriMK/serde_dokechi.svg?branch=master)](https://travis-ci.org/IgaguriMK/serde_dokechi)
-[![Build Status (dev)](https://travis-ci.org/IgaguriMK/serde_dokechi.svg?branch=dev)](https://travis-ci.org/IgaguriMK/serde_dokechi)
 
-## Overview
+*Dokechi format* is binary data format that focus on only serialized binary size.
+`serde_dokechi` is a serializer / deserializer of Dokechi format.
 
-`serde_dokechi` is a serializer / deserializer library focus on only serialized binary size.
-
-Minimum supprted Rust version is `1.40.0 (2019-12-19)`.
+The minimum supprted Rust version is `1.40.0 (2019-12-19)`.
 
 ## License
 

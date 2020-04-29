@@ -1,3 +1,5 @@
+//! Serialize Rust data structure to Dokechi format .
+
 use std::fmt::Display;
 use std::io::{self, Write};
 
@@ -6,6 +8,7 @@ use thiserror::Error;
 
 use crate::varuint::{encode_u128, encode_u64};
 
+/// Serialize the given data structure as Dokechi format into the IO stream.
 pub fn to_writer<W: Write, T: Serialize>(w: W, value: T) -> Result<(), Error> {
     let mut serializer = Serializer::new(w);
     value.serialize(&mut serializer)?;
@@ -13,12 +16,14 @@ pub fn to_writer<W: Write, T: Serialize>(w: W, value: T) -> Result<(), Error> {
     Ok(())
 }
 
+/// A structure that serializes Rust values into Dokechi format.
 #[derive(Debug)]
 pub struct Serializer<W: Write> {
     w: W,
 }
 
 impl<W: Write> Serializer<W> {
+    /// Create new `Serializer`
     pub fn new(w: W) -> Serializer<W> {
         Serializer { w }
     }
@@ -266,6 +271,8 @@ impl<'a, W: Write> ser::Serializer for &'a mut Serializer<W> {
     }
 }
 
+/// An support type of [`Serializer`](struct.Serializer.html).
+///
 #[derive(Debug)]
 pub struct Compound<'a, W: Write> {
     serializer: &'a mut Serializer<W>,
@@ -374,19 +381,24 @@ impl<'a, W: Write> ser::SerializeStructVariant for Compound<'a, W> {
     }
 }
 
+/// The [Serializer](struct.Serializer.html)'s error type.
 #[derive(Debug, Error)]
+#[non_exhaustive]
 pub enum Error {
+    /// The underlying reader returnd IO error.
     #[error("{0}")]
     IO(#[from] io::Error),
+    /// Sequence size is required.
     #[error("input sequence has no size hint")]
     NoSequenceSize,
+    /// An error from serde framework.
     #[error("{0}")]
-    Other(String),
+    Serde(String),
 }
 
 impl ser::Error for Error {
     fn custom<T: Display>(msg: T) -> Error {
-        Error::Other(msg.to_string())
+        Error::Serde(msg.to_string())
     }
 }
 
